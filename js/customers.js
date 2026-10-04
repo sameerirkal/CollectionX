@@ -4,10 +4,6 @@
 
 'use strict';
 
-// -------------------------------------
-// CUSTOMER TABLE
-// -------------------------------------
-
 function renderCustomers() {
   const tableBody = document.getElementById('customerTableBody');
   if (!tableBody) return;
@@ -30,17 +26,17 @@ function renderCustomers() {
       record.accountReference
     ].join(' ').toLowerCase();
 
-    const matchesSearch = searchable.includes(searchTerm);
-    const matchesStatus = !statusFilter || record.status === statusFilter;
-    const matchesAccount =
-      !accountFilter || record.accountStatus === accountFilter;
-
-    return matchesSearch && matchesStatus && matchesAccount;
+    return (
+      searchable.includes(searchTerm) &&
+      (!statusFilter || record.status === statusFilter) &&
+      (!accountFilter || record.accountStatus === accountFilter)
+    );
   });
 
   const countElement = document.getElementById('customerCount');
   if (countElement) {
-    countElement.textContent = `${filtered.length} customer${filtered.length === 1 ? '' : 's'}`;
+    countElement.textContent =
+      `${filtered.length} customer${filtered.length === 1 ? '' : 's'}`;
   }
 
   if (filtered.length === 0) {
@@ -84,17 +80,40 @@ function renderCustomers() {
             data-action="edit"
             data-id="${escapeHTML(record.id)}"
             title="Edit customer"
-            aria-label="Edit ${escapeHTML(record.name)}"
+            aria-label="Edit customer"
           >
             <i data-lucide="pencil"></i>
           </button>
+
+          <button
+            class="icon-btn"
+            type="button"
+            data-payment-action="payment"
+            data-id="${escapeHTML(record.id)}"
+            title="Record payment"
+            aria-label="Record payment"
+          >
+            <i data-lucide="wallet"></i>
+          </button>
+
+          <button
+            class="icon-btn"
+            type="button"
+            data-payment-action="ptp"
+            data-id="${escapeHTML(record.id)}"
+            title="Set PTP"
+            aria-label="Set promise to pay"
+          >
+            <i data-lucide="calendar-check"></i>
+          </button>
+
           <button
             class="icon-btn danger"
             type="button"
             data-action="delete"
             data-id="${escapeHTML(record.id)}"
             title="Delete customer"
-            aria-label="Delete ${escapeHTML(record.name)}"
+            aria-label="Delete customer"
           >
             <i data-lucide="trash-2"></i>
           </button>
@@ -107,7 +126,7 @@ function renderCustomers() {
 }
 
 // -------------------------------------
-// EDIT & DELETE ACTIONS
+// EDIT & DELETE
 // -------------------------------------
 
 function handleCustomerTableAction(event) {
@@ -131,7 +150,7 @@ function deleteCustomer(recordId) {
   if (!record) return;
 
   const confirmed = window.confirm(
-    `Delete ${record.name} from CollectionX? This action cannot be undone.`
+    `Delete ${record.name} from CollectionX? This cannot be undone.`
   );
 
   if (!confirmed) return;
@@ -149,25 +168,26 @@ function deleteCustomer(recordId) {
 }
 
 // -------------------------------------
-// FILTERS & SEARCH
+// SEARCH & FILTERS
 // -------------------------------------
 
 function setupCustomerFilters() {
-  const search = document.getElementById('customerSearch');
-  const status = document.getElementById('customerStatusFilter');
-  const account = document.getElementById('accountStatusFilter');
+  document.getElementById('customerSearch')
+    ?.addEventListener('input', renderCustomers);
 
-  search?.addEventListener('input', renderCustomers);
-  status?.addEventListener('change', renderCustomers);
-  account?.addEventListener('change', renderCustomers);
+  document.getElementById('customerStatusFilter')
+    ?.addEventListener('change', renderCustomers);
+
+  document.getElementById('accountStatusFilter')
+    ?.addEventListener('change', renderCustomers);
 }
 
 // -------------------------------------
-// ICON REFRESH
+// ICONS
 // -------------------------------------
 
 function refreshIcons() {
-  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+  if (window.lucide?.createIcons) {
     window.lucide.createIcons();
   }
 }
@@ -177,9 +197,8 @@ function refreshIcons() {
 // -------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-  const tableBody = document.getElementById('customerTableBody');
-
-  tableBody?.addEventListener('click', handleCustomerTableAction);
+  document.getElementById('customerTableBody')
+    ?.addEventListener('click', handleCustomerTableAction);
 
   setupCustomerFilters();
   renderCustomers();
