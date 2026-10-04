@@ -1,0 +1,557 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#08111f">
+  <meta name="description" content="CollectionX - Collection Management System">
+  <title>CollectionX | Collection Management</title>
+
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Excel import/export library -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+
+    <div class="brand">
+      <div class="brand-icon">CX</div>
+      <span>Collection<span class="green">X</span></span>
+    </div>
+
+    <div class="nav-label">MAIN MENU</div>
+
+    <nav class="navigation">
+      <button class="nav-link active" data-view="dashboard">
+        <span>▦</span> Dashboard
+      </button>
+
+      <button class="nav-link" data-view="customers">
+        <span>♙</span> Customers
+      </button>
+
+      <button class="nav-link" data-view="followups">
+        <span>◷</span> Follow-ups
+      </button>
+
+      <button class="nav-link" data-view="reports">
+        <span>▤</span> Reports & MIS
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="online-indicator"></div>
+      Local workspace
+      <small>Browser-based storage</small>
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+
+      <div class="topbar-left">
+        <button id="menuBtn" class="menu-btn" aria-label="Toggle navigation">
+          ☰
+        </button>
+
+        <div>
+          <div class="eyebrow">COLLECTION WORKSPACE</div>
+          <h1 id="pageTitle">Dashboard</h1>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <span id="currentDate" class="date-label"></span>
+        <button class="btn-primary" id="quickAddBtn">
+          + Add Customer
+        </button>
+      </div>
+
+    </header>
+
+    <!-- DASHBOARD -->
+    <section id="dashboardView" class="view active">
+
+      <div class="welcome-card">
+        <div>
+          <div class="eyebrow">OVERVIEW</div>
+          <h2>Welcome to CollectionX</h2>
+          <p>Manage your collections, customers, and daily follow-ups.</p>
+        </div>
+
+        <div class="welcome-logo">CX</div>
+      </div>
+
+      <!-- STATISTICS -->
+      <div class="stats-grid">
+
+        <article class="stat-card">
+          <div class="stat-heading">
+            Allocated Customers
+            <span class="stat-icon">♙</span>
+          </div>
+          <strong id="totalCustomers">0</strong>
+          <small>Total customer records</small>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-heading">
+            Total Outstanding
+            <span class="stat-icon">₹</span>
+          </div>
+          <strong id="totalOutstanding">₹0</strong>
+          <small>Active accounts</small>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-heading">
+            Today's Calls
+            <span class="stat-icon">↗</span>
+          </div>
+          <strong id="todayCalls">0</strong>
+          <small id="contactRate">0% contact rate</small>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-heading">
+            PTP Cases
+            <span class="stat-icon">◷</span>
+          </div>
+          <strong id="ptpCases">0</strong>
+          <small>Promise to pay</small>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-heading">
+            Paid Cases
+            <span class="stat-icon">✓</span>
+          </div>
+          <strong id="paidCases">0</strong>
+          <small>Fully paid accounts</small>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-heading">
+            Collection Achievement
+            <span class="stat-icon">%</span>
+          </div>
+          <strong id="collectionAchievement">0%</strong>
+          <small>Portfolio recovery ratio</small>
+        </article>
+
+      </div>
+
+      <!-- DASHBOARD LOWER SECTION -->
+      <div class="dashboard-grid">
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Collection Overview</h3>
+              <p>Customer status distribution</p>
+            </div>
+          </div>
+
+          <div id="statusChart" class="status-chart">
+            <!-- Rendered by JavaScript -->
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Pending Follow-ups</h3>
+              <p>Cases requiring attention</p>
+            </div>
+
+            <button class="text-btn" data-goto="followups">
+              View all →
+            </button>
+          </div>
+
+          <div id="dashboardFollowups">
+            <!-- Rendered by JavaScript -->
+          </div>
+        </section>
+
+      </div>
+
+      <!-- RECENT CUSTOMERS -->
+      <section class="panel recent-panel">
+
+        <div class="panel-header">
+          <div>
+            <h3>Recently Updated Customers</h3>
+            <p>Your latest account activity</p>
+          </div>
+
+          <button class="text-btn" data-goto="customers">
+            All customers →
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Account Reference</th>
+                <th>Outstanding</th>
+                <th>Status</th>
+                <th>Next Follow-up</th>
+              </tr>
+            </thead>
+
+            <tbody id="recentCustomerRows">
+              <!-- Rendered by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+
+    </section>
+
+    <!-- CUSTOMER MANAGEMENT -->
+    <section id="customersView" class="view">
+
+      <div class="section-heading">
+        <div>
+          <h2>Customer Management</h2>
+          <p>Search, review, and manage customer accounts.</p>
+        </div>
+
+        <div class="button-group">
+          <button class="btn-secondary" id="importExcelBtn">
+            ↑ Import Excel
+          </button>
+
+          <button class="btn-primary" id="addCustomerBtn">
+            + New Customer
+          </button>
+
+          <input
+            type="file"
+            id="excelFileInput"
+            accept=".xlsx,.xls,.csv"
+            hidden
+          >
+        </div>
+      </div>
+
+      <!-- SEARCH AND FILTERS -->
+      <div class="toolbar">
+
+        <div class="search-box">
+          <span>⌕</span>
+          <input
+            type="search"
+            id="customerSearch"
+            placeholder="Search name, mobile, customer ID..."
+          >
+        </div>
+
+        <select id="customerStatusFilter">
+          <option value="">All Statuses</option>
+          <option value="NC">NC</option>
+          <option value="PTP">PTP</option>
+          <option value="CBK">CBK</option>
+          <option value="Paid">Paid</option>
+          <option value="Partial Paid">Partial Paid</option>
+        </select>
+
+        <select id="accountStatusFilter">
+          <option value="">All Accounts</option>
+          <option value="Active">Active</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+
+        <button class="btn-secondary" id="exportExcelBtn">
+          ↓ Export
+        </button>
+
+      </div>
+
+      <!-- CUSTOMER TABLE -->
+      <section class="panel table-panel">
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Customer ID / Account</th>
+                <th>Outstanding</th>
+                <th>Minimum Due</th>
+                <th>Status</th>
+                <th>Follow-up</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody id="customerTableBody">
+              <!-- Rendered by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-footer" id="customerCount">
+          Showing 0 customers
+        </div>
+
+      </section>
+
+    </section>
+
+    <!-- FOLLOW-UPS -->
+    <section id="followupsView" class="view">
+
+      <div class="section-heading">
+        <div>
+          <h2>Follow-up Queue</h2>
+          <p>Track callbacks, promised payments, and overdue cases.</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+
+        <select id="followupFilter">
+          <option value="all">All Follow-ups</option>
+          <option value="today">Due Today</option>
+          <option value="overdue">Overdue</option>
+          <option value="upcoming">Upcoming</option>
+        </select>
+
+      </div>
+
+      <section class="panel table-panel">
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Mobile</th>
+                <th>Follow-up Date</th>
+                <th>Status</th>
+                <th>PTP Amount</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody id="followupTableBody">
+              <!-- Rendered by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+
+    </section>
+
+    <!-- REPORTS -->
+    <section id="reportsView" class="view">
+
+      <div class="section-heading">
+        <div>
+          <h2>Reports & MIS</h2>
+          <p>Review and export your collection performance.</p>
+        </div>
+
+        <button class="btn-primary" id="exportReportBtn">
+          ↓ Export Report
+        </button>
+      </div>
+
+      <div class="report-grid">
+
+        <article class="panel report-card">
+          <span>Portfolio Outstanding</span>
+          <strong id="reportOutstanding">₹0</strong>
+        </article>
+
+        <article class="panel report-card">
+          <span>Recorded Paid Amount</span>
+          <strong id="reportPaid">₹0</strong>
+        </article>
+
+        <article class="panel report-card">
+          <span>PTP Amount</span>
+          <strong id="reportPtp">₹0</strong>
+        </article>
+
+        <article class="panel report-card">
+          <span>Pending Cases</span>
+          <strong id="reportPending">0</strong>
+        </article>
+
+      </div>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Status Summary</h3>
+            <p>Case count by current status</p>
+          </div>
+        </div>
+
+        <div id="reportStatusSummary">
+          <!-- Rendered by JavaScript -->
+        </div>
+      </section>
+
+    </section>
+
+  </main>
+
+  <!-- ADD / EDIT CUSTOMER MODAL -->
+  <div class="modal-backdrop" id="customerModal">
+
+    <section class="modal">
+
+      <div class="modal-header">
+        <div>
+          <div class="eyebrow">CUSTOMER RECORD</div>
+          <h2 id="modalTitle">Add Customer</h2>
+        </div>
+
+        <button class="icon-btn" id="closeModalBtn" aria-label="Close">
+          ✕
+        </button>
+      </div>
+
+      <form id="customerForm">
+
+        <input type="hidden" id="editRecordId">
+
+        <div class="form-grid">
+
+          <label>
+            Customer Name
+            <input type="text" id="customerName" required>
+          </label>
+
+          <label>
+            Mobile Number
+            <input type="tel" id="mobileNumber">
+          </label>
+
+          <label>
+            Customer ID
+            <input type="text" id="customerId">
+          </label>
+
+          <label>
+            Account Reference
+            <input type="text" id="accountReference">
+          </label>
+
+          <label>
+            Outstanding Amount
+            <input type="number" id="outstandingAmount" min="0" step="0.01" value="0">
+          </label>
+
+          <label>
+            Minimum Due
+            <input type="number" id="minimumDue" min="0" step="0.01" value="0">
+          </label>
+
+          <label>
+            Bare Minimum
+            <input type="number" id="bareMinimum" min="0" step="0.01" value="0">
+          </label>
+
+          <label>
+            Cycle / Allocation
+            <input type="text" id="cycleAllocation">
+          </label>
+
+          <label>
+            Account Status
+            <select id="accountStatus">
+              <option value="Active">Active</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </label>
+
+          <label>
+            Collection Status
+            <select id="collectionStatus">
+              <option value="NC">NC</option>
+              <option value="PTP">PTP</option>
+              <option value="CBK">CBK</option>
+              <option value="Paid">Paid</option>
+              <option value="Partial Paid">Partial Paid</option>
+            </select>
+          </label>
+
+          <label>
+            Next Follow-up
+            <input type="date" id="nextFollowup">
+          </label>
+
+          <label>
+            PTP Date
+            <input type="date" id="ptpDate">
+          </label>
+
+          <label>
+            Promised Amount
+            <input type="number" id="promisedAmount" min="0" step="0.01" value="0">
+          </label>
+
+          <label>
+            Paid Amount
+            <input type="number" id="paidAmount" min="0" step="0.01" value="0">
+          </label>
+
+          <label class="full-width">
+            Notes
+            <textarea
+              id="customerNotes"
+              rows="3"
+              placeholder="Add customer notes..."
+            ></textarea>
+          </label>
+
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="cancelModalBtn">
+            Cancel
+          </button>
+
+          <button type="submit" class="btn-primary">
+            Save Customer
+          </button>
+        </div>
+
+      </form>
+
+    </section>
+
+  </div>
+
+  <!-- NOTIFICATION -->
+  <div id="toast" class="toast" role="status"></div>
+
+  <!-- JAVASCRIPT MODULES -->
+  <script src="js/app.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/followups.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/excel.js"></script>
+
+</body>
+</html>
