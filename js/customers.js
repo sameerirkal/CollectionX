@@ -4,6 +4,152 @@
 
 'use strict';
 
+// -------------------------------------
+// PHONE & MESSAGE HELPERS
+// -------------------------------------
+
+function cleanPhoneNumber(phone) {
+  let digits = String(phone || '').replace(/\D/g, '');
+
+  // Convert common Indian local mobile formats to country-code format.
+  if (digits.length === 10) {
+    digits = '91' + digits;
+  } else if (digits.length === 11 && digits.startsWith('0')) {
+    digits = '91' + digits.slice(1);
+  }
+
+  return digits;
+}
+
+function getCustomerMessage(record) {
+  const name = String(record.name || 'Customer').trim();
+  const outstanding = money(record.outstanding);
+
+  return `Hi ${name}, this is regarding your account. Your current outstanding amount is ${outstanding}. Please let us know a convenient time to discuss.`;
+}
+
+function getWhatsAppLink(record) {
+  const phone = cleanPhoneNumber(record.mobile);
+  if (!phone) return '';
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(getCustomerMessage(record))}`;
+}
+
+function getSMSLink(record) {
+  const phone = cleanPhoneNumber(record.mobile);
+  if (!phone) return '';
+
+  return `sms:${phone}?body=${encodeURIComponent(getCustomerMessage(record))}`;
+}
+
+function getCallLink(record) {
+  const phone = cleanPhoneNumber(record.mobile);
+  if (!phone) return '';
+
+  return `tel:${phone}`;
+}
+
+// -------------------------------------
+// CUSTOMER ACTION BUTTONS
+// -------------------------------------
+
+function communicationAction(label, icon, href, className, disabled = false) {
+  if (disabled || !href) {
+    return `
+      <span
+        class="table-action-btn ${className} is-disabled"
+        title="No valid mobile number"
+        aria-disabled="true"
+      >
+        <i data-lucide="${icon}"></i>
+        <span>${label}</span>
+      </span>
+    `;
+  }
+
+  const target = label === 'WhatsApp'
+    ? ' target="_blank" rel="noopener noreferrer"'
+    : '';
+
+  return `
+    <a
+      class="table-action-btn ${className}"
+      href="${escapeHTML(href)}"
+      aria-label="${label} customer"
+      title="${label} customer"${target}
+    >
+      <i data-lucide="${icon}"></i>
+      <span>${label}</span>
+    </a>
+  `;
+}
+
+function renderCustomerActions(record) {
+  const callLink = getCallLink(record);
+  const whatsappLink = getWhatsAppLink(record);
+  const smsLink = getSMSLink(record);
+
+  return `
+    <div class="table-actions">
+      ${communicationAction('Call', 'phone', callLink, 'call-btn')}
+      ${communicationAction('WhatsApp', 'message-circle', whatsappLink, 'whatsapp-btn')}
+      ${communicationAction('Text', 'message-square', smsLink, 'sms-btn')}
+
+      <button
+        class="table-action-btn payment-btn"
+        type="button"
+        data-payment-action="payment"
+        data-id="${escapeHTML(record.id)}"
+        title="Record payment"
+        aria-label="Record payment for ${escapeHTML(record.name)}"
+      >
+        <i data-lucide="wallet"></i>
+        <span>Payment</span>
+      </button>
+
+      <button
+        class="table-action-btn ptp-btn"
+        type="button"
+        data-payment-action="ptp"
+        data-id="${escapeHTML(record.id)}"
+        title="Set promise to pay"
+        aria-label="Set PTP for ${escapeHTML(record.name)}"
+      >
+        <i data-lucide="calendar-check"></i>
+        <span>PTP</span>
+      </button>
+
+      <button
+        class="table-action-btn edit-btn"
+        type="button"
+        data-action="edit"
+        data-id="${escapeHTML(record.id)}"
+        title="Edit customer"
+        aria-label="Edit ${escapeHTML(record.name)}"
+      >
+        <i data-lucide="pencil"></i>
+        <span>Edit</span>
+      </button>
+
+      <button
+        class="table-action-btn delete-btn"
+        type="button"
+        data-action="delete"
+        data-id="${escapeHTML(record.id)}"
+        title="Delete customer"
+        aria-label="Delete ${escapeHTML(record.name)}"
+      >
+        <i data-lucide="trash-2"></i>
+        <span>Delete</span>
+      </button>
+    </div>
+  `;
+}
+
+// -------------------------------------
+// CUSTOMER TABLE
+// -------------------------------------
+
 function renderCustomers() {
   const tableBody = document.getElementById('customerTableBody');
   if (!tableBody) return;
@@ -34,6 +180,7 @@ function renderCustomers() {
   });
 
   const countElement = document.getElementById('customerCount');
+
   if (countElement) {
     countElement.textContent =
       `${filtered.length} customer${filtered.length === 1 ? '' : 's'}`;
@@ -63,62 +210,20 @@ function renderCustomers() {
           </div>
         </div>
       </td>
+
       <td>${escapeHTML(record.mobile || '—')}</td>
       <td>${escapeHTML(record.accountReference || '—')}</td>
       <td>${money(record.outstanding)}</td>
+
       <td>
         <span class="status-badge ${getStatusClass(record.status)}">
           ${escapeHTML(record.status || 'Pending')}
         </span>
       </td>
+
       <td>${formatDate(record.nextFollowup)}</td>
-      <td>
-        <div class="table-actions">
-          <button
-            class="icon-btn"
-            type="button"
-            data-action="edit"
-            data-id="${escapeHTML(record.id)}"
-            title="Edit customer"
-            aria-label="Edit customer"
-          >
-            <i data-lucide="pencil"></i>
-          </button>
 
-          <button
-            class="icon-btn"
-            type="button"
-            data-payment-action="payment"
-            data-id="${escapeHTML(record.id)}"
-            title="Record payment"
-            aria-label="Record payment"
-          >
-            <i data-lucide="wallet"></i>
-          </button>
-
-          <button
-            class="icon-btn"
-            type="button"
-            data-payment-action="ptp"
-            data-id="${escapeHTML(record.id)}"
-            title="Set PTP"
-            aria-label="Set promise to pay"
-          >
-            <i data-lucide="calendar-check"></i>
-          </button>
-
-          <button
-            class="icon-btn danger"
-            type="button"
-            data-action="delete"
-            data-id="${escapeHTML(record.id)}"
-            title="Delete customer"
-            aria-label="Delete customer"
-          >
-            <i data-lucide="trash-2"></i>
-          </button>
-        </div>
-      </td>
+      <td>${renderCustomerActions(record)}</td>
     </tr>
   `).join('');
 
